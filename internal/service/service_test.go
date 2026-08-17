@@ -78,6 +78,29 @@ func TestRunSamplesAreIsolated(t *testing.T) {
 	}
 }
 
+func TestRunReadingsIsolatedFromInput(t *testing.T) {
+	app := newService(t)
+	register(t, app, "mic-iso", nil)
+
+	input := model.SubmitRunInput{Readings: []float64{40, 45}}
+	created, err := app.SubmitRun(context.Background(), "mic-iso", input)
+	if err != nil {
+		t.Fatalf("submit run: %v", err)
+	}
+
+	// 返回的 run 和请求体都不应与底层切片共享
+	created.Readings[0] = 999
+	input.Readings[0] = 888
+
+	runs, err := app.ListRuns(context.Background(), "mic-iso")
+	if err != nil {
+		t.Fatalf("list runs: %v", err)
+	}
+	if runs[0].Readings[0] != 40 {
+		t.Fatalf("stored readings shared with submit input or returned run: %+v", runs[0].Readings)
+	}
+}
+
 func TestMissingInstrumentPreservesNotFound(t *testing.T) {
 	app := newService(t)
 	_, err := app.SubmitRun(context.Background(), "missing", model.SubmitRunInput{Readings: []float64{1}})

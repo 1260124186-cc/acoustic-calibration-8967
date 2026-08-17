@@ -20,6 +20,17 @@ func CloneInstrument(source Instrument) Instrument {
 	return source
 }
 
+// CloneReadings 复制读数切片，避免与原切片共享底层数组
+func CloneReadings(source []float64) []float64 {
+	if source == nil {
+		return nil
+	}
+	copyOf := make([]float64, len(source))
+	copy(copyOf, source)
+	return copyOf
+}
+
 func CloneRun(source CalibrationRun) CalibrationRun {
+	source.Readings = CloneReadings(source.Readings)
 	return source
 }

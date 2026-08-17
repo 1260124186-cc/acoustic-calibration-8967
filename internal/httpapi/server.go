@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
-	"sort"
 	"strings"
 
 	"example.com/acoustic-calibration/internal/model"
@@ -90,9 +89,6 @@ func (s *Server) instrumentActions(w http.ResponseWriter, r *http.Request) {
 			writeServiceError(w, err)
 			return
 		}
-		sort.Slice(runs, func(i, j int) bool {
-			return runs[i].CreatedAt.After(runs[j].CreatedAt)
-		})
 		writeJSON(w, http.StatusOK, runs)
 	default:
 		writeError(w, http.StatusMethodNotAllowed, errors.New("method not allowed"))

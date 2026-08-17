@@ -84,7 +84,7 @@ func (s *Service) SubmitRun(ctx context.Context, instrumentID string, input mode
 	run := model.CalibrationRun{
 		ID:           s.nextID("run"),
 		InstrumentID: instrumentID,
-		Readings:     input.Readings,
+		Readings:     append([]float64(nil), input.Readings...),
 		Mean:         mean,
 		Peak:         peak,
 		Status:       statusFor(accepted),

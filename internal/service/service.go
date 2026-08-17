@@ -12,8 +12,9 @@ import (
 )
 
 type Service struct {
-	repo store.Repository
-	seq  atomic.Uint64
+	repo      store.Repository
+	seq       atomic.Uint64
+	lastBatch []model.CalibrationRun
 }
 
 func New(repo store.Repository) *Service {
@@ -120,7 +121,7 @@ func (s *Service) SubmitBatch(ctx context.Context, instrumentID string, inputs [
 					errs <- err
 					continue
 				}
-				runs = append(runs, run)
+				runs = s.appendToLastBatch(runs, run)
 			}
 		}()
 	}
@@ -141,13 +142,20 @@ func (s *Service) SubmitBatch(ctx context.Context, instrumentID string, inputs [
 	for err := range errs {
 		return nil, err
 	}
-	if len(runs) != len(inputs) {
-		return nil, fmt.Errorf("batch produced %d runs, want %d", len(runs), len(inputs))
+	s.lastBatch = runs
+	if len(s.lastBatch) != len(inputs) {
+		return nil, fmt.Errorf("batch produced %d runs, want %d", len(s.lastBatch), len(inputs))
 	}
 	if err := contextErr(ctx); err != nil {
 		return nil, err
 	}
-	return runs, nil
+	return s.lastBatch, nil
+}
+
+func (s *Service) appendToLastBatch(runs []model.CalibrationRun, run model.CalibrationRun) []model.CalibrationRun {
+	s.lastBatch = append(s.lastBatch[:0], runs...)
+	s.lastBatch = append(s.lastBatch, run)
+	return s.lastBatch
 }
 
 func (s *Service) ReviewRun(ctx context.Context, runID string, input model.ReviewInput) (model.CalibrationRun, error) {

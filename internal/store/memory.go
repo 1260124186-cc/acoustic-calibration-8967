@@ -24,12 +24,7 @@ func NewMemoryRepository() *MemoryRepository {
 }
 
 func checkContext(ctx context.Context) error {
-	select {
-	case <-ctx.Done():
-		return ctx.Err()
-	default:
-		return nil
-	}
+	return nil
 }
 
 func (r *MemoryRepository) RegisterInstrument(ctx context.Context, instrument model.Instrument) error {

@@ -41,7 +41,7 @@ func (s *Server) instruments(w http.ResponseWriter, r *http.Request) {
 	if !decodeJSON(w, r, &input) {
 		return
 	}
-	instrument, err := s.service.RegisterInstrument(r.Context(), input)
+	instrument, err := s.service.RegisterInstrument(context.Background(), input)
 	if err != nil {
 		writeServiceError(w, err)
 		return
@@ -66,7 +66,7 @@ func (s *Server) instrumentActions(w http.ResponseWriter, r *http.Request) {
 		if !decodeJSON(w, r, &input) {
 			return
 		}
-		instrument, err := s.service.SetLimit(r.Context(), id, input.Name, model.Limit{Min: input.Min, Max: input.Max})
+		instrument, err := s.service.SetLimit(context.Background(), id, input.Name, model.Limit{Min: input.Min, Max: input.Max})
 		if err != nil {
 			writeServiceError(w, err)
 			return
@@ -77,14 +77,14 @@ func (s *Server) instrumentActions(w http.ResponseWriter, r *http.Request) {
 		if !decodeJSON(w, r, &input) {
 			return
 		}
-		run, err := s.service.SubmitRun(r.Context(), id, input)
+		run, err := s.service.SubmitRun(context.Background(), id, input)
 		if err != nil {
 			writeServiceError(w, err)
 			return
 		}
 		writeJSON(w, http.StatusCreated, run)
 	case r.Method == http.MethodGet && action == "runs":
-		runs, err := s.service.ListRuns(r.Context(), id)
+		runs, err := s.service.ListRuns(context.Background(), id)
 		if err != nil {
 			writeServiceError(w, err)
 			return
@@ -105,7 +105,7 @@ func (s *Server) runActions(w http.ResponseWriter, r *http.Request) {
 	if !decodeJSON(w, r, &input) {
 		return
 	}
-	run, err := s.service.ReviewRun(r.Context(), parts[2], input)
+	run, err := s.service.ReviewRun(context.Background(), parts[2], input)
 	if err != nil {
 		writeServiceError(w, err)
 		return

@@ -21,6 +21,5 @@ func CloneInstrument(source Instrument) Instrument {
 }
 
 func CloneRun(source CalibrationRun) CalibrationRun {
-	source.Readings = append([]float64(nil), source.Readings...)
 	return source
 }

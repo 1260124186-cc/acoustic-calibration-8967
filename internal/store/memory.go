@@ -123,7 +123,7 @@ func (r *MemoryRepository) ListRuns(ctx context.Context, instrumentID string) ([
 	ids := append([]string(nil), r.byInstrument[instrumentID]...)
 	runs := make([]model.CalibrationRun, 0, len(ids))
 	for _, id := range ids {
-		runs = append(runs, model.CloneRun(r.runs[id]))
+		runs = append(runs, r.runs[id])
 	}
 	return runs, nil
 }

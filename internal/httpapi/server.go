@@ -126,7 +126,7 @@ func writeServiceError(w http.ResponseWriter, err error) {
 	switch {
 	case errors.Is(err, model.ErrInvalidInstrument), errors.Is(err, model.ErrInvalidRun), errors.Is(err, model.ErrInvalidReview):
 		status = http.StatusBadRequest
-	case errors.Is(err, model.ErrNotFound):
+	case err == model.ErrNotFound:
 		status = http.StatusNotFound
 	case errors.Is(err, model.ErrAlreadyExists):
 		status = http.StatusConflict

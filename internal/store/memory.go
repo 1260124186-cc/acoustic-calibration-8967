@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"fmt"
 	"sync"
 
 	"example.com/acoustic-calibration/internal/model"
@@ -53,7 +54,7 @@ func (r *MemoryRepository) GetInstrument(ctx context.Context, id string) (model.
 	defer r.mu.RUnlock()
 	instrument, ok := r.instruments[id]
 	if !ok {
-		return model.Instrument{}, model.ErrNotFound
+		return model.Instrument{}, fmt.Errorf("instrument %q: %v", id, model.ErrNotFound)
 	}
 	return model.CloneInstrument(instrument), nil
 }
@@ -65,7 +66,7 @@ func (r *MemoryRepository) UpdateInstrument(ctx context.Context, instrument mode
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	if _, ok := r.instruments[instrument.ID]; !ok {
-		return model.ErrNotFound
+		return fmt.Errorf("instrument %q: %v", instrument.ID, model.ErrNotFound)
 	}
 	r.instruments[instrument.ID] = model.CloneInstrument(instrument)
 	return nil
@@ -96,7 +97,7 @@ func (r *MemoryRepository) GetRun(ctx context.Context, id string) (model.Calibra
 	defer r.mu.RUnlock()
 	run, ok := r.runs[id]
 	if !ok {
-		return model.CalibrationRun{}, model.ErrNotFound
+		return model.CalibrationRun{}, fmt.Errorf("run %q: %v", id, model.ErrNotFound)
 	}
 	return model.CloneRun(run), nil
 }
@@ -108,7 +109,7 @@ func (r *MemoryRepository) UpdateRun(ctx context.Context, run model.CalibrationR
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	if _, ok := r.runs[run.ID]; !ok {
-		return model.ErrNotFound
+		return fmt.Errorf("run %q: %v", run.ID, model.ErrNotFound)
 	}
 	r.runs[run.ID] = model.CloneRun(run)
 	return nil

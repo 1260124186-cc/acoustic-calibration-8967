@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 	"sync/atomic"
@@ -101,27 +102,39 @@ func (s *Service) SubmitRun(ctx context.Context, instrumentID string, input mode
 }
 
 func (s *Service) SubmitBatch(ctx context.Context, instrumentID string, inputs []model.SubmitRunInput, workers int) ([]model.CalibrationRun, error) {
+	if err := contextErr(ctx); err != nil {
+		return nil, err
+	}
 	if workers < 1 {
 		workers = 1
 	}
-	type job struct {
-		input model.SubmitRunInput
-	}
-	jobs := make(chan job)
-	errs := make(chan error, len(inputs))
-	runs := make([]model.CalibrationRun, 0, len(inputs))
+	batchCtx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	jobs := make(chan model.SubmitRunInput)
+	errs := make(chan error, workers)
+	var (
+		mu   sync.Mutex
+		runs = make([]model.CalibrationRun, 0, len(inputs))
+	)
 	var wg sync.WaitGroup
 	wg.Add(workers)
 	for i := 0; i < workers; i++ {
 		go func() {
 			defer wg.Done()
-			for item := range jobs {
-				run, err := s.SubmitRun(ctx, instrumentID, item.input)
+			for input := range jobs {
+				run, err := s.SubmitRun(batchCtx, instrumentID, input)
 				if err != nil {
-					errs <- err
-					continue
+					select {
+					case errs <- err:
+					default:
+					}
+					cancel()
+					return
 				}
-				runs = s.appendToLastBatch(runs, run)
+				mu.Lock()
+				runs = append(runs, run)
+				mu.Unlock()
 			}
 		}()
 	}
@@ -129,8 +142,8 @@ func (s *Service) SubmitBatch(ctx context.Context, instrumentID string, inputs [
 		defer close(jobs)
 		for _, input := range inputs {
 			select {
-			case jobs <- job{input: input}:
-			case <-ctx.Done():
+			case jobs <- input:
+			case <-batchCtx.Done():
 				return
 			}
 		}
@@ -142,20 +155,20 @@ func (s *Service) SubmitBatch(ctx context.Context, instrumentID string, inputs [
 	for err := range errs {
 		return nil, err
 	}
-	s.lastBatch = runs
-	if len(s.lastBatch) != len(inputs) {
-		return nil, fmt.Errorf("batch produced %d runs, want %d", len(s.lastBatch), len(inputs))
+	if err := contextErr(batchCtx); err != nil && !errors.Is(err, context.Canceled) {
+		return nil, err
 	}
 	if err := contextErr(ctx); err != nil {
 		return nil, err
 	}
-	return s.lastBatch, nil
-}
-
-func (s *Service) appendToLastBatch(runs []model.CalibrationRun, run model.CalibrationRun) []model.CalibrationRun {
+	mu.Lock()
 	s.lastBatch = append(s.lastBatch[:0], runs...)
-	s.lastBatch = append(s.lastBatch, run)
-	return s.lastBatch
+	result := append([]model.CalibrationRun(nil), runs...)
+	mu.Unlock()
+	if len(result) != len(inputs) {
+		return nil, fmt.Errorf("batch produced %d runs, want %d", len(result), len(inputs))
+	}
+	return result, nil
 }
 
 func (s *Service) ReviewRun(ctx context.Context, runID string, input model.ReviewInput) (model.CalibrationRun, error) {

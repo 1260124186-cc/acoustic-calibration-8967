@@ -63,6 +63,9 @@ func (s *Service) SubmitRun(ctx context.Context, instrumentID string, input mode
 	if err := input.Validate(); err != nil {
 		return model.CalibrationRun{}, err
 	}
+	if err := contextErr(ctx); err != nil {
+		return model.CalibrationRun{}, err
+	}
 	instrument, err := s.repo.GetInstrument(ctx, instrumentID)
 	if err != nil {
 		return model.CalibrationRun{}, fmt.Errorf("load instrument %q: %w", instrumentID, err)
@@ -74,6 +77,9 @@ func (s *Service) SubmitRun(ctx context.Context, instrumentID string, input mode
 	mean, peak, accepted, err := model.EvaluateReadings(input.Readings, limit)
 	if err != nil {
 		return model.CalibrationRun{}, fmt.Errorf("evaluate readings: %w", err)
+	}
+	if err := contextErr(ctx); err != nil {
+		return model.CalibrationRun{}, err
 	}
 	run := model.CalibrationRun{
 		ID:           s.nextID("run"),

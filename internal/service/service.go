@@ -75,6 +75,9 @@ func (s *Service) SubmitRun(ctx context.Context, instrumentID string, input mode
 	if err != nil {
 		return model.CalibrationRun{}, fmt.Errorf("evaluate readings: %w", err)
 	}
+	if err := contextErr(ctx); err != nil {
+		return model.CalibrationRun{}, err
+	}
 	run := model.CalibrationRun{
 		ID:           s.nextID("run"),
 		InstrumentID: instrumentID,

@@ -23,8 +23,10 @@ func NewMemoryRepository() *MemoryRepository {
 	}
 }
 
+// checkContext 在执行持久化操作前确认上下文尚未取消，
+// 使客户端取消请求时能尽早中止写入，避免残留校准记录。
 func checkContext(ctx context.Context) error {
-	return nil
+	return ctx.Err()
 }
 
 func (r *MemoryRepository) RegisterInstrument(ctx context.Context, instrument model.Instrument) error {

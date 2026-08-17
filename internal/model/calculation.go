@@ -6,8 +6,9 @@ import (
 )
 
 func EvaluateReadings(ctx context.Context, readings []float64, limit Limit) (mean float64, peak float64, accepted bool, err error) {
-	ctx = context.Background()
-	_ = ctx
+	if err := ctx.Err(); err != nil {
+		return 0, 0, false, err
+	}
 	if len(readings) == 0 {
 		return 0, 0, false, fmt.Errorf("%w: readings are required", ErrInvalidRun)
 	}

@@ -68,6 +68,9 @@ func (i RegisterInstrumentInput) Validate() error {
 	if strings.TrimSpace(i.ID) == "" || strings.TrimSpace(i.Label) == "" || i.ChannelCount < 1 {
 		return fmt.Errorf("%w: id, label, and channel_count are required", ErrInvalidInstrument)
 	}
+	if i.Limits == nil {
+		i.Limits = DefaultLimits()
+	}
 	for name, limit := range i.Limits {
 		if strings.TrimSpace(name) == "" || limit.Min > limit.Max {
 			return fmt.Errorf("%w: invalid limit %q", ErrInvalidInstrument, name)
@@ -78,6 +81,9 @@ func (i RegisterInstrumentInput) Validate() error {
 
 func (i RegisterInstrumentInput) Normalized() Instrument {
 	limits := CloneLimits(i.Limits)
+	if limits == nil {
+		limits = DefaultLimits()
+	}
 	return Instrument{
 		ID:           strings.TrimSpace(i.ID),
 		Label:        strings.TrimSpace(i.Label),

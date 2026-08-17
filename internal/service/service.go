@@ -46,6 +46,9 @@ func (s *Service) SetLimit(ctx context.Context, instrumentID, name string, limit
 	if err != nil {
 		return model.Instrument{}, fmt.Errorf("load instrument %q: %w", instrumentID, err)
 	}
+	if instrument.Limits == nil {
+		instrument.Limits = model.DefaultLimits()
+	}
 	instrument.Limits[name] = limit
 	if err := s.repo.UpdateInstrument(ctx, instrument); err != nil {
 		return model.Instrument{}, fmt.Errorf("update instrument %q: %w", instrumentID, err)

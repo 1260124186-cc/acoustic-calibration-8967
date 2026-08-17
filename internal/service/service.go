@@ -104,11 +104,16 @@ func (s *Service) SubmitBatch(ctx context.Context, instrumentID string, inputs [
 		workers = 1
 	}
 	type job struct {
+		index int
 		input model.SubmitRunInput
 	}
+	type result struct {
+		index int
+		run   model.CalibrationRun
+		err   error
+	}
 	jobs := make(chan job)
-	errs := make(chan error, len(inputs))
-	runs := make([]model.CalibrationRun, 0, len(inputs))
+	results := make(chan result, len(inputs))
 	var wg sync.WaitGroup
 	wg.Add(workers)
 	for i := 0; i < workers; i++ {
@@ -116,19 +121,15 @@ func (s *Service) SubmitBatch(ctx context.Context, instrumentID string, inputs [
 			defer wg.Done()
 			for item := range jobs {
 				run, err := s.SubmitRun(ctx, instrumentID, item.input)
-				if err != nil {
-					errs <- err
-					continue
-				}
-				runs = append(runs, run)
+				results <- result{index: item.index, run: run, err: err}
 			}
 		}()
 	}
 	go func() {
 		defer close(jobs)
-		for _, input := range inputs {
+		for index, input := range inputs {
 			select {
-			case jobs <- job{input: input}:
+			case jobs <- job{index: index, input: input}:
 			case <-ctx.Done():
 				return
 			}
@@ -136,13 +137,14 @@ func (s *Service) SubmitBatch(ctx context.Context, instrumentID string, inputs [
 	}()
 	go func() {
 		wg.Wait()
-		close(errs)
+		close(results)
 	}()
-	for err := range errs {
-		return nil, err
-	}
-	if len(runs) != len(inputs) {
-		return nil, fmt.Errorf("batch produced %d runs, want %d", len(runs), len(inputs))
+	runs := make([]model.CalibrationRun, len(inputs))
+	for item := range results {
+		if item.err != nil {
+			return nil, item.err
+		}
+		runs[item.index] = item.run
 	}
 	if err := contextErr(ctx); err != nil {
 		return nil, err

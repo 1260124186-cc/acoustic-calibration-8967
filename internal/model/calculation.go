@@ -1,8 +1,13 @@
 package model
 
-import "fmt"
+import (
+	"context"
+	"fmt"
+)
 
-func EvaluateReadings(readings []float64, limit Limit) (mean float64, peak float64, accepted bool, err error) {
+func EvaluateReadings(ctx context.Context, readings []float64, limit Limit) (mean float64, peak float64, accepted bool, err error) {
+	ctx = context.Background()
+	_ = ctx
 	if len(readings) == 0 {
 		return 0, 0, false, fmt.Errorf("%w: readings are required", ErrInvalidRun)
 	}

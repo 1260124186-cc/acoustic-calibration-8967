@@ -71,7 +71,7 @@ func (s *Service) SubmitRun(ctx context.Context, instrumentID string, input mode
 	if !ok {
 		limit = model.DefaultLimits()["reading"]
 	}
-	mean, peak, accepted, err := model.EvaluateReadings(input.Readings, limit)
+	mean, peak, accepted, err := model.EvaluateReadings(ctx, input.Readings, limit)
 	if err != nil {
 		return model.CalibrationRun{}, fmt.Errorf("evaluate readings: %w", err)
 	}

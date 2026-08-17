@@ -1,4 +1,4 @@
-# acoustic-calibration-8967 Docker 交付说明
+# acoustic-calibration__002 Docker 交付说明
 
 ## 项目概览
 - Acoustic Calibration Record Service stores calibration instruments and evaluates
@@ -20,8 +20,8 @@ go run ./cmd/calibrated
 ## Docker 构建
 
 ```bash
-./build_benzhi_docker.sh acoustic-calibration-8967-benzhi linux/amd64
-docker run --rm -it acoustic-calibration-8967-benzhi bash
+./build_benzhi_docker.sh acoustic-calibration__002-benzhi linux/amd64
+docker run --rm -it acoustic-calibration__002-benzhi bash
 ```
 
 ## 环境

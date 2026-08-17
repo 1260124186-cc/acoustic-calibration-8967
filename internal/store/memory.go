@@ -41,7 +41,7 @@ func (r *MemoryRepository) RegisterInstrument(ctx context.Context, instrument mo
 	if _, exists := r.instruments[instrument.ID]; exists {
 		return model.ErrAlreadyExists
 	}
-	r.instruments[instrument.ID] = model.CloneInstrument(instrument)
+	r.instruments[instrument.ID] = instrument
 	return nil
 }
 

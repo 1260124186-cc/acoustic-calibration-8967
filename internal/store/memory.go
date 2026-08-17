@@ -75,8 +75,8 @@ func (r *MemoryRepository) SaveRun(ctx context.Context, run model.CalibrationRun
 	if err := checkContext(ctx); err != nil {
 		return err
 	}
-	r.mu.Lock()
-	defer r.mu.Unlock()
+	r.mu.RLock()
+	defer r.mu.RUnlock()
 	if _, ok := r.instruments[run.InstrumentID]; !ok {
 		return model.ErrNotFound
 	}
@@ -105,8 +105,8 @@ func (r *MemoryRepository) UpdateRun(ctx context.Context, run model.CalibrationR
 	if err := checkContext(ctx); err != nil {
 		return err
 	}
-	r.mu.Lock()
-	defer r.mu.Unlock()
+	r.mu.RLock()
+	defer r.mu.RUnlock()
 	if _, ok := r.runs[run.ID]; !ok {
 		return model.ErrNotFound
 	}
@@ -132,8 +132,8 @@ func (r *MemoryRepository) AppendAudit(ctx context.Context, entry AuditEntry) er
 	if err := checkContext(ctx); err != nil {
 		return err
 	}
-	r.mu.Lock()
-	defer r.mu.Unlock()
+	r.mu.RLock()
+	defer r.mu.RUnlock()
 	r.audit = append(r.audit, entry)
 	return nil
 }
